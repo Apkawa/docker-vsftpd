@@ -1,10 +1,12 @@
-# fauria/vsftpd
+# apkawa/vsftpd
 
-![docker_logo](https://raw.githubusercontent.com/fauria/docker-vsftpd/master/docker_139x115.png)![docker_fauria_logo](https://raw.githubusercontent.com/fauria/docker-vsftpd/master/docker_fauria_161x115.png)
+![docker_logo](https://raw.githubusercontent.com/apkawa/docker-vsftpd/master/docker_139x115.png)![docker_fauria_logo](https://raw.githubusercontent.com/apkawa/docker-vsftpd/master/docker_fauria_161x115.png)
 
-[![Docker Pulls](https://img.shields.io/docker/pulls/fauria/vsftpd.svg?style=plastic)](https://hub.docker.com/r/fauria/vsftpd/)
-[![Docker Build Status](https://img.shields.io/docker/build/fauria/vsftpd.svg?style=plastic)](https://hub.docker.com/r/fauria/vsftpd/builds/)
-[![](https://images.microbadger.com/badges/image/fauria/vsftpd.svg)](https://microbadger.com/images/fauria/vsftpd "fauria/vsftpd")
+[![Docker Pulls](https://img.shields.io/docker/pulls/apkawa/vsftpd.svg?style=plastic)](https://hub.docker.com/r/apkawa/vsftpd/)
+[![Docker Build Status](https://img.shields.io/docker/build/apkawa/vsftpd.svg?style=plastic)](https://hub.docker.com/r/apkawa/vsftpd/builds/)
+[![](https://images.microbadger.com/badges/image/apkawa/vsftpd.svg)](https://microbadger.com/images/apkawa/vsftpd "apkawa/vsftpd")
+
+Forked from [fauria/vsftpd](https://github.com/fauria/docker-vsftpd)
 
 This Docker container implements a vsftpd server, with the following features:
 
@@ -14,12 +16,12 @@ This Docker container implements a vsftpd server, with the following features:
  * Passive mode
  * Logging to a file or STDOUT.
 
-### Installation from [Docker registry hub](https://registry.hub.docker.com/u/fauria/vsftpd/).
+### Installation from [Docker registry hub](https://registry.hub.docker.com/u/apkawa/vsftpd/).
 
 You can download the image with the following command:
 
 ```bash
-docker pull fauria/vsftpd
+docker pull apkawa/vsftpd
 ```
 
 Environment variables
@@ -41,82 +43,88 @@ This image uses environment variables to allow the configuration of some paramet
 
 ----
 
-* Variable name: `PASV_ADDRESS_ENABLE`
+* Variable name: `FTP_PASV_ADDRESS_ENABLE`
 * Default value: NO
 * Accepted values: <NO|YES>
 * Description: Enables / Disables Passive Mode
 
 ----
 
-* Variable name: `PASV_ADDRESS_RESOLVE`
+* Variable name: `FTP_PASV_ADDRESS_RESOLVE`
 * Default value: YES
 * Accepted values: <NO|YES>
 * Description: Set to YES if you want to use a hostname (as opposed to IP address) in the `PASV_ADDRESS` option.
 
 ----
 
-* Variable name: `PASV_ADDRESS`
+* Variable name: `FTP_PASV_ADDRESS`
 * Default value: Docker host IP / Hostname.
-* Accepted values: Any IPv4 address or Hostname (see PASV_ADDRESS_RESOLVE).
+* Accepted values: Any IPv4 address or Hostname (see `FTP_PASV_ADDRESS_RESOLVE`).
 * Description: If you don't specify an IP address to be used in passive mode, the routed IP address of the Docker host will be used. Bear in mind that this could be a local address.
 
 ----
 
-* Variable name: `PASV_ADDR_RESOLVE`
+* Variable name: `FTP_PASV_ADDR_RESOLVE`
 * Default value: NO.
 * Accepted values: YES or NO.
 * Description: Set to YES if you want to use a hostname (as opposed to IP address) in the PASV_ADDRESS option.
 
 ----
 
-* Variable name: `PASV_ENABLE`
+* Variable name: `FTP_PASV_ENABLE`
 * Default value: YES.
 * Accepted values: YES or NO.
 * Description: Set to NO if you want to disallow the PASV method of obtaining a data connection.
 
 ----
 
-* Variable name: `PASV_MIN_PORT`
+* Variable name: `FTP_PASV_MIN_PORT`
 * Default value: 21100.
 * Accepted values: Any valid port number.
 * Description: This will be used as the lower bound of the passive mode port range. Remember to publish your ports with `docker -p` parameter.
 
 ----
 
-* Variable name: `PASV_MAX_PORT`
+* Variable name: `FTP_PASV_MAX_PORT`
 * Default value: 21110.
 * Accepted values: Any valid port number.
 * Description: This will be used as the upper bound of the passive mode port range. It will take longer to start a container with a high number of published ports.
 
 ----
 
-* Variable name: `XFERLOG_STD_FORMAT`
+* Variable name: `FTP_XFERLOG_STD_FORMAT`
 * Default value: NO.
 * Accepted values: YES or NO.
 * Description: Set to YES if you want the transfer log file to be written in standard xferlog format.
 
 ----
 
-* Variable name: `LOG_STDOUT`
+* Variable name: `FTP_LOG_STDOUT`
 * Default value: Empty string.
 * Accepted values: Any string to enable, empty string or not defined to disable.
 * Description: Output vsftpd log through STDOUT, so that it can be accessed through the [container logs](https://docs.docker.com/engine/reference/commandline/container_logs).
 
 ----
 
-* Variable name: `FILE_OPEN_MODE`
+* Variable name: `FTP_FILE_OPEN_MODE`
 * Default value: 0666.
 * Accepted values: File system permissions.
 * Description: The permissions with which uploaded files are created. Umasks are applied on top of this value. You may wish to change to 0777 if you want uploaded files to be executable.
 
 ----
 
-* Variable name: `LOCAL_UMASK`
+* Variable name: `FTP_LOCAL_UMASK`
 * Default value: 077.
 * Accepted values: File system permissions.
 * Description: The value that the umask for file creation is set to for local users. NOTE! If you want to specify octal values, remember the "0" prefix otherwise the value will be treated as a base 10 integer!
 
 ----
+
+More variables with prefix `FTP_` pass to vsftpd.conf
+
+As example, in documentation `banner_file=path_to_file`, variable must be FTP_BANNER_FILE=/path/to/file
+
+http://vsftpd.beasts.org/vsftpd_conf.html
 
 Exposed ports and volumes
 ----
@@ -130,34 +138,44 @@ Use cases
 
 1) Create a temporary container for testing purposes:
 
-```bash
-  docker run --rm fauria/vsftpd
-```
+    ```bash
+      docker run --rm apkawa/vsftpd
+    ```
 
 2) Create a container in active mode using the default user account, with a binded data directory:
 
-```bash
-docker run -d -p 21:21 -v /my/data/directory:/home/vsftpd --name vsftpd fauria/vsftpd
-# see logs for credentials:
-docker logs vsftpd
-```
+    ```bash
+    docker run -d -p 21:21 -v /my/data/directory:/home/vsftpd --name vsftpd apkawa/vsftpd
+    # see logs for credentials:
+    docker logs vsftpd
+    ```
+3) Create a container with user list
+    ``` 
+    cat > /tmp/users.txt << EOF
+    myuser
+    mypasswd
+    myuser2
+    myuser2pwd
+    EOF
 
-3) Create a **production container** with a custom user account, binding a data directory and enabling both active and passive mode:
+    docker run -d -p 2021:21 
+        -v /tmp/users.txt:/etc/vsftpd/virtual_users.txt
+        -v /my/data/directory:/home/vsftpd 
+        --name vsftpd apkawa/vsftpd
+    ```
 
-```bash
-docker run -d -v /my/data/directory:/home/vsftpd \
--p 20:20 -p 21:21 -p 21100-21110:21100-21110 \
--e FTP_USER=myuser -e FTP_PASS=mypass \
--e PASV_ADDRESS=127.0.0.1 -e PASV_MIN_PORT=21100 -e PASV_MAX_PORT=21110 \
---name vsftpd --restart=always fauria/vsftpd
-```
+4) Create a **production container** with a custom user account, binding a data directory and enabling both active and passive mode:
+
+    ```bash
+    docker run -d -v /my/data/directory:/home/vsftpd \
+    -p 20:20 -p 21:21 -p 21100-21110:21100-21110 \
+    -e FTP_USER=myuser -e FTP_PASS=mypass \
+    -e FTP_PASV_ADDRESS=127.0.0.1 -e FTP_PASV_MIN_PORT=21100 -e FTP_PASV_MAX_PORT=21110 \
+    --name vsftpd --restart=always apkawa/vsftpd
+    ```
 
 4) Manually add a new FTP user to an existing container:
-```bash
-docker exec -i -t vsftpd bash
-mkdir /home/vsftpd/myuser
-echo -e "myuser\nmypass" >> /etc/vsftpd/virtual_users.txt
-/usr/bin/db_load -T -t hash -f /etc/vsftpd/virtual_users.txt /etc/vsftpd/virtual_users.db
-exit
-docker restart vsftpd
-```
+    ```bash
+    docker exec -i -t vsftpd run-vsftpd.sh add_user myuser mypass
+    ```
+  

@@ -1,66 +1,102 @@
 #!/bin/bash
-
-# If no env var for FTP_USER has been specified, use 'admin':
-if [ "$FTP_USER" = "**String**" ]; then
+set -ex
+function init() {
+  # If no env var for FTP_USER has been specified, use 'admin':
+  if [ "$FTP_USER" = "**String**" ]; then
     export FTP_USER='admin'
-fi
+  fi
 
-# If no env var has been specified, generate a random password for FTP_USER:
-if [ "$FTP_PASS" = "**Random**" ]; then
-    export FTP_PASS=`cat /dev/urandom | tr -dc A-Z-a-z-0-9 | head -c${1:-16}`
-fi
+  # If no env var has been specified, generate a random password for FTP_USER:
+  if [ "$FTP_PASS" = "**Random**" ]; then
+    export FTP_PASS=$(cat /dev/urandom | tr -dc A-Z-a-z-0-9 | head -c${1:-16})
+  fi
 
-# Do not log to STDOUT by default:
-if [ "$LOG_STDOUT" = "**Boolean**" ]; then
+  LOG_STDOUT=$FTP_LOG_STDOUT
+
+  # Do not log to STDOUT by default:
+  if [ "$LOG_STDOUT" = "**Boolean**" ]; then
     export LOG_STDOUT=''
-else
+  else
     export LOG_STDOUT='Yes.'
-fi
+  fi
 
-# Create home dir and update vsftpd user db:
-mkdir -p "/home/vsftpd/${FTP_USER}"
-chown -R ftp:ftp /home/vsftpd/
+  # Create home dir and update vsftpd user db:
 
-echo -e "${FTP_USER}\n${FTP_PASS}" > /etc/vsftpd/virtual_users.txt
-/usr/bin/db_load -T -t hash -f /etc/vsftpd/virtual_users.txt /etc/vsftpd/virtual_users.db
+  USER=$FTP_USER
+  PASS=$FTP_PASS
+  user_add $FTP_USER $FTP_PASS
 
-# Set passive mode parameters:
-if [ "$PASV_ADDRESS" = "**IPv4**" ]; then
-    export PASV_ADDRESS=$(/sbin/ip route|awk '/default/ { print $3 }')
-fi
+  unset FTP_USER FTP_PASS FTP_LOG_STDOUT
 
-echo "pasv_address=${PASV_ADDRESS}" >> /etc/vsftpd/vsftpd.conf
-echo "pasv_max_port=${PASV_MAX_PORT}" >> /etc/vsftpd/vsftpd.conf
-echo "pasv_min_port=${PASV_MIN_PORT}" >> /etc/vsftpd/vsftpd.conf
-echo "pasv_addr_resolve=${PASV_ADDR_RESOLVE}" >> /etc/vsftpd/vsftpd.conf
-echo "pasv_enable=${PASV_ENABLE}" >> /etc/vsftpd/vsftpd.conf
-echo "file_open_mode=${FILE_OPEN_MODE}" >> /etc/vsftpd/vsftpd.conf
-echo "local_umask=${LOCAL_UMASK}" >> /etc/vsftpd/vsftpd.conf
-echo "xferlog_std_format=${XFERLOG_STD_FORMAT}" >> /etc/vsftpd/vsftpd.conf
+  # Set passive mode parameters:
+  if [ "$FTP_PASV_ADDRESS" = "**IPv4**" ]; then
+    export FTP_PASV_ADDRESS=$(route | awk '/default/ { print $3 }')
+  fi
+  SETTINGS=''
+  while IFS='=' read -r name value; do
+    if [[ $name == 'FTP_'* ]]; then
+      name=$(echo -n $name | sed 's/^FTP_//' | tr '[:upper:]' '[:lower:]')
+      echo "$name=$value" >>/etc/vsftpd/vsftpd.conf
+      SETTINGS="$SETTINGS
+      $name: $value"
+    fi
+  done < <(env)
 
-# Get log file path
-export LOG_FILE=`grep xferlog_file /etc/vsftpd/vsftpd.conf|cut -d= -f2`
+  # Get log file path
+  export LOG_FILE=$(grep xferlog_file /etc/vsftpd/vsftpd.conf | cut -d= -f2)
 
-# stdout server info:
-if [ ! $LOG_STDOUT ]; then
-cat << EOB
-	*************************************************
-	*                                               *
-	*    Docker image: fauria/vsftpd                *
-	*    https://github.com/fauria/docker-vsftpd    *
-	*                                               *
-	*************************************************
+  # stdout server info:
+  if [ ! $LOG_STDOUT ]; then
+    cat <<EOF
+    *************************************************
+    *                                               *
+    *    Docker image: apkawa/vsftpd                *
+    *    https://github.com/apkawa/docker-vsftpd    *
+    *                                               *
+    *************************************************
 
-	SERVER SETTINGS
-	---------------
-	· FTP User: $FTP_USER
-	· FTP Password: $FTP_PASS
-	· Log file: $LOG_FILE
-	· Redirect vsftpd log to STDOUT: No.
-EOB
-else
+    SERVER SETTINGS
+    ---------------
+    · FTP User: $USER
+    · FTP Password: $PASS
+    · Log file: $LOG_FILE
+    · Redirect vsftpd log to STDOUT: No.
+    $SETTINGS
+
+EOF
+  else
     /usr/bin/ln -sf /dev/stdout $LOG_FILE
-fi
+  fi
 
-# Run vsftpd:
-&>/dev/null /usr/sbin/vsftpd /etc/vsftpd/vsftpd.conf
+  # Run vsftpd:
+  /usr/sbin/vsftpd &>/dev/null /etc/vsftpd/vsftpd.conf
+}
+
+function reload() {
+  killall -s HUP /usr/sbin/vsftpd -q || true
+}
+
+function user_add() {
+  _user=$1
+  _pass=$2
+  _dir="/home/vsftpd/${_user}"
+  mkdir -p $_dir
+  chown -R ftp:ftp $_dir
+  echo -e "${_user}\n${_pass}" >>/etc/vsftpd/virtual_users.txt
+  /usr/bin/db_load -T -t hash -f /etc/vsftpd/virtual_users.txt /etc/vsftpd/virtual_users.db
+  reload
+}
+
+function user_del() {
+  # TODO
+}
+
+function user_list() {
+  # TODO
+}
+
+function start() {
+  init
+}
+
+$*

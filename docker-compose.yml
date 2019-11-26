@@ -1,7 +1,6 @@
 version: "3"
 
 services:
-
   vsftpd:
     build:
       context: .
@@ -10,9 +9,12 @@ services:
         USER_ID: 1000
         GROUP_ID: 1000
     restart: always
+    environment:
+      FTP_USER: admin
+      FTP_PASS: admin
     ports:
-      - 0.0.0.0:20:20
-      - 0.0.0.0:21:21
+      - 0.0.0.0:2020:20
+      - 0.0.0.0:2021:21
       - 21100-21110:21100-21110
     volumes:
       - ./home:/home/vsftpd
