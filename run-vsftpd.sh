@@ -89,10 +89,12 @@ function user_add() {
 
 function user_del() {
   # TODO
+  echo "user_del"
 }
 
 function user_list() {
   # TODO
+  echo "user_list"
 }
 
 function start() {
