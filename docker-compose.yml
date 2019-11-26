@@ -10,8 +10,7 @@ services:
         GROUP_ID: 1000
     restart: always
     environment:
-      FTP_USER: admin
-      FTP_PASS: admin
+      FTP_USERS: admin:admin;test:test
     ports:
       - 0.0.0.0:2020:20
       - 0.0.0.0:2021:21

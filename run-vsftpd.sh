@@ -1,15 +1,6 @@
 #!/bin/bash
-set -ex
+set -e
 function init() {
-  # If no env var for FTP_USER has been specified, use 'admin':
-  if [ "$FTP_USER" = "**String**" ]; then
-    export FTP_USER='admin'
-  fi
-
-  # If no env var has been specified, generate a random password for FTP_USER:
-  if [ "$FTP_PASS" = "**Random**" ]; then
-    export FTP_PASS=$(cat /dev/urandom | tr -dc A-Z-a-z-0-9 | head -c${1:-16})
-  fi
 
   LOG_STDOUT=$FTP_LOG_STDOUT
 
@@ -20,13 +11,25 @@ function init() {
     export LOG_STDOUT='Yes.'
   fi
 
+
+  if [ ! $FTP_USERS ]; then
+    # If no env var for FTP_USER has been specified, use 'admin':
+    # If no env var has been specified, generate a random password for FTP_USER:
+    FTP_USERS="admin:$(cat /dev/urandom | tr -dc A-Z-a-z-0-9 | head -c${1:-16})"
+  fi
+
+  USERS=""
   # Create home dir and update vsftpd user db:
+  IFS=';' read -ra _USERS <<< $FTP_USERS
+  for i in "${_USERS[@]}"; do
+    IFS=':' read user pass <<< $i
+    user_add $user $pass
+    USERS="$USERS
+    - $user:$pass"
+  done
 
-  USER=$FTP_USER
-  PASS=$FTP_PASS
-  user_add $FTP_USER $FTP_PASS
 
-  unset FTP_USER FTP_PASS FTP_LOG_STDOUT
+  unset FTP_USERS FTP_LOG_STDOUT
 
   # Set passive mode parameters:
   if [ "$FTP_PASV_ADDRESS" = "**IPv4**" ]; then
@@ -57,8 +60,9 @@ function init() {
 
     SERVER SETTINGS
     ---------------
-    · FTP User: $USER
-    · FTP Password: $PASS
+    · FTP Users:
+      $USERS
+
     · Log file: $LOG_FILE
     · Redirect vsftpd log to STDOUT: No.
     $SETTINGS
@@ -82,8 +86,9 @@ function user_add() {
   _dir="/home/vsftpd/${_user}"
   mkdir -p $_dir
   chown -R ftp:ftp $_dir
-  echo -e "${_user}\n${_pass}" >>/etc/vsftpd/virtual_users.txt
-  /usr/bin/db_load -T -t hash -f /etc/vsftpd/virtual_users.txt /etc/vsftpd/virtual_users.db
+  echo -e "${_user}\n${_pass}" >> /tmp/virtual_users.txt
+  /usr/bin/db_load -T -t hash -f /tmp/virtual_users.txt /etc/vsftpd/virtual_users.db
+  rm -f /tmp/virtual_users.txt
   reload
 }
 
