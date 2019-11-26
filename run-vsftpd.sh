@@ -85,7 +85,7 @@ function user_add() {
   _pass=$2
   _dir="/home/vsftpd/${_user}"
   mkdir -p $_dir
-  chown -R ftp:ftp $_dir
+  chown -R --silent ftp:ftp $_dir || true
   echo -e "${_user}\n${_pass}" >> /tmp/virtual_users.txt
   /usr/bin/db_load -T -t hash -f /tmp/virtual_users.txt /etc/vsftpd/virtual_users.db
   rm -f /tmp/virtual_users.txt
