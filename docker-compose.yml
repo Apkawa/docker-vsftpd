@@ -18,3 +18,34 @@ services:
     volumes:
       - ./home:/home/vsftpd
       - ./logs:/var/log/vsftpd
+  vsftpd_ssl:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+      args:
+        USER_ID: 1000
+        GROUP_ID: 1000
+    restart: always
+    environment:
+      FTP_USERS: admin:admin;test:test
+      FTP_CERTIFICATE_GENERATE: 'YES'
+
+      FTP_SSL_ENABLE: 'YES'
+      FTP_CERTIFICATE_SUBJ: "/C=US\
+        /ST=Warwickshire\
+        /L=Leamington\
+        /O=apkawa\
+        /OU=vsftpd\
+        /CN=localhost"
+      FTP_PASV_MIN_PORT: 21120
+      FTP_PASV_MAX_PORT: 21130
+
+    ports:
+      - 0.0.0.0:2120:20
+      - 0.0.0.0:2121:21
+      - 21120-21130:21120-21130
+
+    volumes:
+      - ./home:/home/vsftpd
+      - ./logs:/var/log/vsftpd
+

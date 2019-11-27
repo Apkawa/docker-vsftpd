@@ -15,6 +15,23 @@ ENV FTP_XFERLOG_STD_FORMAT NO
 ENV FTP_FILE_OPEN_MODE 0666
 ENV FTP_LOCAL_UMASK 077
 ENV FTP_WRITE_ENABLE YES
+# SSL Defaults
+
+ENV FTP_CERTIFICATE_SUBJ "/C=UK/ST=Warwickshire/L=Leamington/O=OrgName/OU=IT Department/CN=example.com"
+ENV FTP_CERTIFICATE_GENERATE NO
+ENV FTP_CERTIFICATE_EXPIRE 365
+ENV FTP_RSA_CERT_FILE "/etc/vsftpd/certs/server.crt"
+ENV FTP_RSA_PRIVATE_KEY_FILE "/etc/vsftpd/certs/server.key"
+ENV FTP_SSL_ENABLE 'NO'
+ENV FTP_FORCE_LOCAL_DATA_SSL 'YES'
+ENV FTP_FORCE_LOCAL_LOGINS_SSL 'YES'
+ENV FTP_SSL_TLSV1_2 'YES'
+ENV FTP_SSL_TLSV1_1 'YES'
+ENV FTP_SSL_TLSV1 'YES'
+ENV FTP_SSL_SSLV2 'NO'
+ENV FTP_SSL_SSLV3 'NO'
+ENV FTP_REQUIRE_SSL_REUSE 'NO'
+ENV FTP_SSL_CIPHERS 'HIGH'
 
 ENV FTP_LOG_STDOUT **Boolean**
 
@@ -37,6 +54,7 @@ RUN yum install -y \
         db4-utils \
         db4 \
         psmisc \
+        openssl \
     && yum clean all \
     && rm -rf /var/cache/yum \
     && curl -fsSL --compressed \
@@ -50,6 +68,7 @@ RUN yum install -y \
     && chown -R ftp:ftp /home/vsftpd/
 
 VOLUME /home/vsftpd
+VOLUME /etc/vsftpd/certs/
 VOLUME /var/log/vsftpd
 
 EXPOSE 20 21

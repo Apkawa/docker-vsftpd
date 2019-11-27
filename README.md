@@ -2,8 +2,8 @@
 
 ![docker_logo](https://raw.githubusercontent.com/apkawa/docker-vsftpd/master/docker_139x115.png)![docker_fauria_logo](https://raw.githubusercontent.com/apkawa/docker-vsftpd/master/docker_fauria_161x115.png)
 
-[![Docker Pulls](https://img.shields.io/docker/pulls/apkawa/vsftpd.svg?style=plastic)](https://hub.docker.com/r/apkawa/vsftpd/)
-[![Docker Build Status](https://img.shields.io/docker/build/apkawa/vsftpd.svg?style=plastic)](https://hub.docker.com/r/apkawa/vsftpd/builds/)
+[![Docker Pulls](https://img.shields.io/docker/pulls/apkawa/vsftpd.svg)](https://hub.docker.com/r/apkawa/vsftpd/)
+[![Docker Build Status](https://img.shields.io/docker/build/apkawa/vsftpd.svg)](https://hub.docker.com/r/apkawa/vsftpd/builds/)
 [![](https://images.microbadger.com/badges/image/apkawa/vsftpd.svg)](https://microbadger.com/images/apkawa/vsftpd "apkawa/vsftpd")
 
 Forked from [fauria/vsftpd](https://github.com/fauria/docker-vsftpd)
@@ -142,20 +142,6 @@ Use cases
     # see logs for credentials:
     docker logs vsftpd
     ```
-3) Create a container with user list
-    ``` 
-    cat > /tmp/users.txt << EOF
-    myuser
-    mypasswd
-    myuser2
-    myuser2pwd
-    EOF
-
-    docker run -d -p 2021:21 
-        -v /tmp/users.txt:/etc/vsftpd/virtual_users.txt
-        -v /my/data/directory:/home/vsftpd 
-        --name vsftpd apkawa/vsftpd
-    ```
 
 4) Create a **production container** with a custom user account, binding a data directory and enabling both active and passive mode:
 
@@ -171,4 +157,33 @@ Use cases
     ```bash
     docker exec -i -t vsftpd run-vsftpd.sh add_user myuser mypass
     ```
-  
+ 
+5) Enable SSL and auto generate self signed certificate
+
+    ```bash 
+    docker run -d -v /my/data/directory:/home/vsftpd \
+        -p 20:20 -p 21:21 -p 21100-21110:21100-21110 \
+        -e FTP_USERS=myuser:mypass \
+        -e FTP_CERTIFICATE_GENERATE='YES'
+        -e FTP_CERTIFICATE_EXPIRE=365
+        -e FTP_SSL_ENABLE='YES'
+        -e FTP_CERTIFICATE_SUBJ="/C=US/ST=Warwickshire/L=Leamington/O=apkawa/OU=vsftpd/CN=localhost"
+        --name vsftpd_ssl --restart=always 
+        apkawa/vsftpd
+    ```
+   Certificate regenerated after change FTP_CERTIFICATE_SUBJ or end of expire
+   
+6) Enable SSL and use existed certificate. as example - use letsencrypt certificate
+    ```bash 
+    docker run -d 
+        -v /my/data/directory:/home/vsftpd \
+        -v /my/path/to/letsencrypt/example.com/:/etc/certs/:ro
+        -p 20:20 -p 21:21 -p 21100-21110:21100-21110 \
+        -e FTP_USERS=myuser:mypass \
+        -e FTP_SSL_ENABLE='YES'
+        -e FTP_RSA_CERT_FILE="/etc/certs/fullchain.crt"
+        -e FTP_RSA_PRIVATE_KEY_FILE="/etc/certs/key.pem"
+        --name vsftpd_ssl --restart=always 
+        apkawa/vsftpd
+    ```
+
